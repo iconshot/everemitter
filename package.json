@@ -1,0 +1,21 @@
+{
+  "name": "everemitter",
+  "version": "1.0.0",
+  "description": "Event emitter, small yet powerful.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iconshot/everemitter.git"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "events",
+    "event-emitter"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.5.3"
+  }
+}
