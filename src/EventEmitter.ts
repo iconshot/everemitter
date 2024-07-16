@@ -69,7 +69,7 @@ export class EventEmitter {
         ? listeners.filter((listener) => listener.closure !== closure)
         : [];
 
-    this.update(name, tmpListeners);
+    this.updateListeners(name, tmpListeners);
   }
 
   private remove(name: string, listener: Listener) {
@@ -83,10 +83,10 @@ export class EventEmitter {
       (tmpListener) => tmpListener !== listener
     );
 
-    this.update(name, tmpListeners);
+    this.updateListeners(name, tmpListeners);
   }
 
-  private update(name: string, listeners: Listener[]) {
+  private updateListeners(name: string, listeners: Listener[]) {
     if (listeners.length === 0) {
       this.events.delete(name);
     } else {
@@ -103,7 +103,7 @@ export class EventEmitter {
 
     const tmpListeners = [...listeners];
 
-    this.run(name, tmpListeners, ...args);
+    this.runListeners(name, tmpListeners, ...args);
   }
 
   emitReversed(name: string, ...args) {
@@ -115,10 +115,10 @@ export class EventEmitter {
 
     const tmpListeners = [...listeners].reverse();
 
-    this.run(name, tmpListeners, ...args);
+    this.runListeners(name, tmpListeners, ...args);
   }
 
-  private run(name: string, listeners: Listener[], ...args) {
+  private runListeners(name: string, listeners: Listener[], ...args) {
     for (const listener of listeners) {
       try {
         const bool = listener.closure(...args);
