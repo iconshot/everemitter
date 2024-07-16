@@ -5,8 +5,6 @@ interface Listener {
   once: boolean;
 }
 
-type ListenerArray = Listener[];
-
 export type OnErrorClosure = (error: any, name: string, ...args) => any;
 
 export interface EventEmitterOptions {
@@ -18,7 +16,7 @@ export class EventEmitter {
   private ignoreErrors: boolean;
   private onError?: OnErrorClosure;
 
-  private events: Map<string, ListenerArray> = new Map();
+  private events: Map<string, Listener[]> = new Map();
 
   constructor(options?: EventEmitterOptions) {
     this.ignoreErrors = options?.ignoreErrors ?? false;
@@ -46,12 +44,12 @@ export class EventEmitter {
       return;
     }
 
-    const newArray: ListenerArray =
+    const tmpArray =
       closure !== undefined
-        ? array.filter((listener: Listener) => listener.closure !== closure)
+        ? array.filter((listener) => listener.closure !== closure)
         : [];
 
-    this.events.set(name, newArray);
+    this.events.set(name, tmpArray);
   }
 
   once(name: string, closure: ListenerClosure) {
@@ -75,14 +73,12 @@ export class EventEmitter {
       return;
     }
 
-    const newArray: ListenerArray = array.filter(
-      (tmpListener) => tmpListener !== listener
-    );
+    const tmpArray = array.filter((tmpListener) => tmpListener !== listener);
 
-    this.events.set(name, newArray);
+    this.events.set(name, tmpArray);
   }
 
-  private run(name: string, array: ListenerArray, ...args) {
+  private run(name: string, array: Listener[], ...args) {
     for (const listener of array) {
       try {
         const bool = listener.closure(...args);
