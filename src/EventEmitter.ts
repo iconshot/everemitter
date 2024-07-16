@@ -24,62 +24,102 @@ export class EventEmitter {
   }
 
   on(name: string, closure: ListenerClosure) {
-    let array = this.events.get(name);
+    let listeners = this.events.get(name);
 
-    if (array === undefined) {
-      array = [];
+    if (listeners === undefined) {
+      listeners = [];
 
-      this.events.set(name, array);
+      this.events.set(name, listeners);
     }
 
     const listener: Listener = { closure, once: false };
 
-    array.push(listener);
-  }
-
-  off(name: string, closure?: ListenerClosure) {
-    let array = this.events.get(name);
-
-    if (array === undefined) {
-      return;
-    }
-
-    const tmpArray =
-      closure !== undefined
-        ? array.filter((listener) => listener.closure !== closure)
-        : [];
-
-    this.events.set(name, tmpArray);
+    listeners.push(listener);
   }
 
   once(name: string, closure: ListenerClosure) {
-    let array = this.events.get(name);
+    let listeners = this.events.get(name);
 
-    if (array === undefined) {
-      array = [];
+    if (listeners === undefined) {
+      listeners = [];
 
-      this.events.set(name, array);
+      this.events.set(name, listeners);
     }
 
     const listener: Listener = { closure, once: true };
 
-    array.push(listener);
+    listeners.push(listener);
   }
 
-  private remove(name: string, listener: Listener) {
-    let array = this.events.get(name);
+  off(name?: string, closure?: ListenerClosure) {
+    if (name === undefined) {
+      this.events.clear();
 
-    if (array === undefined) {
       return;
     }
 
-    const tmpArray = array.filter((tmpListener) => tmpListener !== listener);
+    let listeners = this.events.get(name);
 
-    this.events.set(name, tmpArray);
+    if (listeners === undefined) {
+      return;
+    }
+
+    const tmpListeners =
+      closure !== undefined
+        ? listeners.filter((listener) => listener.closure !== closure)
+        : [];
+
+    this.update(name, tmpListeners);
   }
 
-  private run(name: string, array: Listener[], ...args) {
-    for (const listener of array) {
+  private remove(name: string, listener: Listener) {
+    let listeners = this.events.get(name);
+
+    if (listeners === undefined) {
+      return;
+    }
+
+    const tmpListeners = listeners.filter(
+      (tmpListener) => tmpListener !== listener
+    );
+
+    this.update(name, tmpListeners);
+  }
+
+  private update(name: string, listeners: Listener[]) {
+    if (listeners.length === 0) {
+      this.events.delete(name);
+    } else {
+      this.events.set(name, listeners);
+    }
+  }
+
+  emit(name: string, ...args) {
+    const listeners = this.events.get(name);
+
+    if (listeners === undefined) {
+      return;
+    }
+
+    const tmpListeners = [...listeners];
+
+    this.run(name, tmpListeners, ...args);
+  }
+
+  emitReversed(name: string, ...args) {
+    const listeners = this.events.get(name);
+
+    if (listeners === undefined) {
+      return;
+    }
+
+    const tmpListeners = [...listeners].reverse();
+
+    this.run(name, tmpListeners, ...args);
+  }
+
+  private run(name: string, listeners: Listener[], ...args) {
+    for (const listener of listeners) {
       try {
         const bool = listener.closure(...args);
 
@@ -106,29 +146,5 @@ export class EventEmitter {
         }
       }
     }
-  }
-
-  emit(name: string, ...args) {
-    const array = this.events.get(name);
-
-    if (array === undefined) {
-      return;
-    }
-
-    const tmpArray = [...array];
-
-    this.run(name, tmpArray, ...args);
-  }
-
-  emitReversed(name: string, ...args) {
-    const array = this.events.get(name);
-
-    if (array === undefined) {
-      return;
-    }
-
-    const tmpArray = [...array].reverse();
-
-    this.run(name, tmpArray, ...args);
   }
 }
