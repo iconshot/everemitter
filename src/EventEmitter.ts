@@ -72,7 +72,7 @@ export class EventEmitter {
     this.updateListeners(name, tmpListeners);
   }
 
-  private remove(name: string, listener: Listener) {
+  private removeListener(name: string, listener: Listener) {
     let listeners = this.events.get(name);
 
     if (listeners === undefined) {
@@ -142,7 +142,7 @@ export class EventEmitter {
         }
       } finally {
         if (listener.once) {
-          this.remove(name, listener);
+          this.removeListener(name, listener);
         }
       }
     }
