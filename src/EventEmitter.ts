@@ -72,7 +72,11 @@ export class EventEmitter {
     this.updateListeners(name, tmpListeners);
   }
 
-  private removeListener(name: string, listener: Listener) {
+  private removeListenerIfOnce(name: string, listener: Listener) {
+    if (!listener.once) {
+      return;
+    }
+
     let listeners = this.events.get(name);
 
     if (listeners === undefined) {
@@ -119,31 +123,51 @@ export class EventEmitter {
   }
 
   private runListeners(name: string, listeners: Listener[], ...args) {
-    for (const listener of listeners) {
-      try {
-        const bool = listener.closure(...args);
+    if (this.ignoreErrors) {
+      for (const listener of listeners) {
+        this.removeListenerIfOnce(name, listener);
 
-        if (bool === false) {
-          return;
-        }
-      } catch (error) {
-        if (this.ignoreErrors) {
-          continue;
-        }
+        try {
+          const bool = listener.closure(...args);
 
-        if (this.onError !== undefined) {
+          if (bool === false) {
+            return;
+          }
+        } catch (error) {}
+      }
+
+      return;
+    }
+
+    if (this.onError !== undefined) {
+      for (const listener of listeners) {
+        this.removeListenerIfOnce(name, listener);
+
+        try {
+          const bool = listener.closure(...args);
+
+          if (bool === false) {
+            return;
+          }
+        } catch (error) {
           const bool = this.onError(error, name, ...args);
 
           if (bool === false) {
             return;
           }
-        } else {
-          throw error;
         }
-      } finally {
-        if (listener.once) {
-          this.removeListener(name, listener);
-        }
+      }
+
+      return;
+    }
+
+    for (const listener of listeners) {
+      this.removeListenerIfOnce(name, listener);
+
+      const bool = listener.closure(...args);
+
+      if (bool === false) {
+        return;
       }
     }
   }
