@@ -7,18 +7,18 @@ interface Listener {
 
 export type OnErrorClosure = (error: any, name: string, ...args) => any;
 
-export interface EventEmitterOptions {
+export interface EverEmitterOptions {
   ignoreErrors?: boolean;
   onError?: OnErrorClosure;
 }
 
-export class EventEmitter {
+export class EverEmitter {
   private ignoreErrors: boolean;
   private onError?: OnErrorClosure;
 
   private events: Map<string, Listener[]> = new Map();
 
-  constructor(options?: EventEmitterOptions) {
+  constructor(options?: EverEmitterOptions) {
     this.ignoreErrors = options?.ignoreErrors ?? false;
     this.onError = options?.onError;
   }
