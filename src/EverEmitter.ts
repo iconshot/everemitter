@@ -1,11 +1,11 @@
-export type ListenerClosure = (...args) => any;
+export type ListenerClosure = (...args: any[]) => any;
 
 interface Listener {
   closure: ListenerClosure;
   once: boolean;
 }
 
-export type OnErrorClosure = (error: any, name: string, ...args) => any;
+export type OnErrorClosure = (error: any, name: string, ...args: any[]) => any;
 
 export interface EverEmitterOptions {
   ignoreErrors?: boolean;
@@ -23,7 +23,7 @@ export class EverEmitter {
     this.onError = options?.onError;
   }
 
-  on(name: string, closure: ListenerClosure) {
+  on(name: string, closure: ListenerClosure): void {
     let listeners = this.events.get(name);
 
     if (listeners === undefined) {
@@ -37,7 +37,7 @@ export class EverEmitter {
     listeners.push(listener);
   }
 
-  once(name: string, closure: ListenerClosure) {
+  once(name: string, closure: ListenerClosure): void {
     let listeners = this.events.get(name);
 
     if (listeners === undefined) {
@@ -51,7 +51,7 @@ export class EverEmitter {
     listeners.push(listener);
   }
 
-  off(name?: string, closure?: ListenerClosure) {
+  off(name?: string, closure?: ListenerClosure): void {
     if (name === undefined) {
       this.events.clear();
 
@@ -66,13 +66,13 @@ export class EverEmitter {
 
     const tmpListeners =
       closure !== undefined
-        ? listeners.filter((listener) => listener.closure !== closure)
+        ? listeners.filter((listener): boolean => listener.closure !== closure)
         : [];
 
     this.updateListeners(name, tmpListeners);
   }
 
-  private removeListenerIfOnce(name: string, listener: Listener) {
+  private removeListenerIfOnce(name: string, listener: Listener): void {
     if (!listener.once) {
       return;
     }
@@ -84,13 +84,13 @@ export class EverEmitter {
     }
 
     const tmpListeners = listeners.filter(
-      (tmpListener) => tmpListener !== listener
+      (tmpListener): boolean => tmpListener !== listener
     );
 
     this.updateListeners(name, tmpListeners);
   }
 
-  private updateListeners(name: string, listeners: Listener[]) {
+  private updateListeners(name: string, listeners: Listener[]): void {
     if (listeners.length === 0) {
       this.events.delete(name);
     } else {
@@ -98,7 +98,7 @@ export class EverEmitter {
     }
   }
 
-  emit(name: string, ...args) {
+  emit(name: string, ...args: any[]): void {
     const listeners = this.events.get(name);
 
     if (listeners === undefined) {
@@ -110,7 +110,7 @@ export class EverEmitter {
     this.runListeners(name, tmpListeners, ...args);
   }
 
-  emitReversed(name: string, ...args) {
+  emitReversed(name: string, ...args: any[]): void {
     const listeners = this.events.get(name);
 
     if (listeners === undefined) {
@@ -122,7 +122,11 @@ export class EverEmitter {
     this.runListeners(name, tmpListeners, ...args);
   }
 
-  private runListeners(name: string, listeners: Listener[], ...args) {
+  private runListeners(
+    name: string,
+    listeners: Listener[],
+    ...args: any[]
+  ): void {
     if (this.ignoreErrors) {
       for (const listener of listeners) {
         this.removeListenerIfOnce(name, listener);
