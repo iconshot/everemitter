@@ -3,6 +3,8 @@ interface Listener {
   once: boolean;
 }
 
+export type EverEmitterRecord = Record<string, (...args: any[]) => any>;
+
 export type OnErrorClosure = (error: any, name: string, ...args: any[]) => any;
 
 export interface EverEmitterOptions {
@@ -10,7 +12,7 @@ export interface EverEmitterOptions {
   onError?: OnErrorClosure;
 }
 
-export class EverEmitter<K extends Record<string, (...args: any[]) => any>> {
+export class EverEmitter<K extends EverEmitterRecord> {
   private ignoreErrors: boolean;
   private onError?: OnErrorClosure;
 
