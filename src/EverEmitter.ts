@@ -1,7 +1,5 @@
-export type ListenerClosure = (...args: any[]) => any;
-
 interface Listener {
-  closure: ListenerClosure;
+  closure: (...args: any[]) => any;
   once: boolean;
 }
 
@@ -12,7 +10,7 @@ export interface EverEmitterOptions {
   onError?: OnErrorClosure;
 }
 
-export class EverEmitter {
+export class EverEmitter<K extends Record<string, (...args: any[]) => any>> {
   private ignoreErrors: boolean;
   private onError?: OnErrorClosure;
 
@@ -23,13 +21,13 @@ export class EverEmitter {
     this.onError = options?.onError;
   }
 
-  on(name: string, closure: ListenerClosure): void {
-    let listeners = this.events.get(name);
+  on<N extends keyof K>(name: N, closure: K[N]): void {
+    let listeners = this.events.get(name as string);
 
     if (listeners === undefined) {
       listeners = [];
 
-      this.events.set(name, listeners);
+      this.events.set(name as string, listeners);
     }
 
     const listener: Listener = { closure, once: false };
@@ -37,13 +35,13 @@ export class EverEmitter {
     listeners.push(listener);
   }
 
-  once(name: string, closure: ListenerClosure): void {
-    let listeners = this.events.get(name);
+  once<N extends keyof K>(name: N, closure: K[N]): void {
+    let listeners = this.events.get(name as string);
 
     if (listeners === undefined) {
       listeners = [];
 
-      this.events.set(name, listeners);
+      this.events.set(name as string, listeners);
     }
 
     const listener: Listener = { closure, once: true };
@@ -51,14 +49,14 @@ export class EverEmitter {
     listeners.push(listener);
   }
 
-  off(name?: string, closure?: ListenerClosure): void {
+  off<N extends keyof K>(name?: N, closure?: K[N]): void {
     if (name === undefined) {
       this.events.clear();
 
       return;
     }
 
-    let listeners = this.events.get(name);
+    let listeners = this.events.get(name as string);
 
     if (listeners === undefined) {
       return;
@@ -69,7 +67,31 @@ export class EverEmitter {
         ? listeners.filter((listener): boolean => listener.closure !== closure)
         : [];
 
-    this.updateListeners(name, tmpListeners);
+    this.updateListeners(name as string, tmpListeners);
+  }
+
+  emit<N extends keyof K>(name: N, ...args: Parameters<K[N]>): void {
+    const listeners = this.events.get(name as string);
+
+    if (listeners === undefined) {
+      return;
+    }
+
+    const tmpListeners = [...listeners];
+
+    this.runListeners(name as string, tmpListeners, ...args);
+  }
+
+  emitReversed<N extends keyof K>(name: N, ...args: Parameters<K[N]>): void {
+    const listeners = this.events.get(name as string);
+
+    if (listeners === undefined) {
+      return;
+    }
+
+    const tmpListeners = [...listeners].reverse();
+
+    this.runListeners(name as string, tmpListeners, ...args);
   }
 
   private removeListenerIfOnce(name: string, listener: Listener): void {
@@ -96,30 +118,6 @@ export class EverEmitter {
     } else {
       this.events.set(name, listeners);
     }
-  }
-
-  emit(name: string, ...args: any[]): void {
-    const listeners = this.events.get(name);
-
-    if (listeners === undefined) {
-      return;
-    }
-
-    const tmpListeners = [...listeners];
-
-    this.runListeners(name, tmpListeners, ...args);
-  }
-
-  emitReversed(name: string, ...args: any[]): void {
-    const listeners = this.events.get(name);
-
-    if (listeners === undefined) {
-      return;
-    }
-
-    const tmpListeners = [...listeners].reverse();
-
-    this.runListeners(name, tmpListeners, ...args);
   }
 
   private runListeners(
