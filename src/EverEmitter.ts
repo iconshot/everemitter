@@ -23,7 +23,7 @@ export class EverEmitter<K extends SignatureRecord> {
     this.onError = options?.onError;
   }
 
-  on<N extends keyof K>(name: N, closure: K[N]): void {
+  on<N extends keyof K>(name: N, closure: K[N]): this {
     let listeners = this.events.get(name as string);
 
     if (listeners === undefined) {
@@ -35,9 +35,11 @@ export class EverEmitter<K extends SignatureRecord> {
     const listener: Listener = { closure, once: false };
 
     listeners.push(listener);
+
+    return this;
   }
 
-  once<N extends keyof K>(name: N, closure: K[N]): void {
+  once<N extends keyof K>(name: N, closure: K[N]): this {
     let listeners = this.events.get(name as string);
 
     if (listeners === undefined) {
@@ -49,19 +51,21 @@ export class EverEmitter<K extends SignatureRecord> {
     const listener: Listener = { closure, once: true };
 
     listeners.push(listener);
+
+    return this;
   }
 
-  off<N extends keyof K>(name?: N, closure?: K[N]): void {
+  off<N extends keyof K>(name?: N, closure?: K[N]): this {
     if (name === undefined) {
       this.events.clear();
 
-      return;
+      return this;
     }
 
     let listeners = this.events.get(name as string);
 
     if (listeners === undefined) {
-      return;
+      return this;
     }
 
     const tmpListeners =
@@ -70,6 +74,8 @@ export class EverEmitter<K extends SignatureRecord> {
         : [];
 
     this.updateListeners(name as string, tmpListeners);
+
+    return this;
   }
 
   emit<N extends keyof K>(name: N, ...args: Parameters<K[N]>): void {
