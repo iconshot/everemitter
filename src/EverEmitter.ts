@@ -1,144 +1,147 @@
-interface Listener {
-  closure: (...args: any[]) => any;
+interface ListenerEntry {
+  listener: (...args: any[]) => any;
   once: boolean;
 }
 
 export type SignatureRecord = Record<string, (...args: any[]) => any>;
 
-export type OnErrorClosure = (error: any, name: string, ...args: any[]) => any;
+export type OnErrorCallback = (error: any, name: string, ...args: any[]) => any;
 
 export interface EverEmitterOptions {
   ignoreErrors?: boolean;
-  onError?: OnErrorClosure;
+  onError?: OnErrorCallback;
 }
 
 export class EverEmitter<K extends SignatureRecord> {
   private ignoreErrors: boolean;
-  private onError?: OnErrorClosure;
+  private onError?: OnErrorCallback;
 
-  private events: Map<string, Listener[]> = new Map();
+  private events: Map<string, ListenerEntry[]> = new Map();
 
   constructor(options?: EverEmitterOptions) {
     this.ignoreErrors = options?.ignoreErrors ?? false;
     this.onError = options?.onError;
   }
 
-  on<N extends keyof K>(name: N, closure: K[N]): this {
-    let listeners = this.events.get(name as string);
+  public on<N extends keyof K>(name: N, listener: K[N]): this {
+    let entries = this.events.get(name as string);
 
-    if (listeners === undefined) {
-      listeners = [];
+    if (entries === undefined) {
+      entries = [];
 
-      this.events.set(name as string, listeners);
+      this.events.set(name as string, entries);
     }
 
-    const listener: Listener = { closure, once: false };
+    const entry: ListenerEntry = { listener, once: false };
 
-    listeners.push(listener);
+    entries.push(entry);
 
     return this;
   }
 
-  once<N extends keyof K>(name: N, closure: K[N]): this {
-    let listeners = this.events.get(name as string);
+  public once<N extends keyof K>(name: N, listener: K[N]): this {
+    let entries = this.events.get(name as string);
 
-    if (listeners === undefined) {
-      listeners = [];
+    if (entries === undefined) {
+      entries = [];
 
-      this.events.set(name as string, listeners);
+      this.events.set(name as string, entries);
     }
 
-    const listener: Listener = { closure, once: true };
+    const entry: ListenerEntry = { listener, once: true };
 
-    listeners.push(listener);
+    entries.push(entry);
 
     return this;
   }
 
-  off<N extends keyof K>(name?: N, closure?: K[N]): this {
+  public off<N extends keyof K>(name?: N, listener?: K[N]): this {
     if (name === undefined) {
       this.events.clear();
 
       return this;
     }
 
-    let listeners = this.events.get(name as string);
+    let entries = this.events.get(name as string);
 
-    if (listeners === undefined) {
+    if (entries === undefined) {
       return this;
     }
 
-    const tmpListeners =
-      closure !== undefined
-        ? listeners.filter((listener): boolean => listener.closure !== closure)
+    const tmpEntries =
+      listener !== undefined
+        ? entries.filter((entry): boolean => entry.listener !== listener)
         : [];
 
-    this.updateListeners(name as string, tmpListeners);
+    this.updateEntries(name as string, tmpEntries);
 
     return this;
   }
 
-  emit<N extends keyof K>(name: N, ...args: Parameters<K[N]>): void {
-    const listeners = this.events.get(name as string);
+  public emit<N extends keyof K>(name: N, ...args: Parameters<K[N]>): void {
+    const entries = this.events.get(name as string);
 
-    if (listeners === undefined) {
+    if (entries === undefined) {
       return;
     }
 
-    const tmpListeners = [...listeners];
+    const tmpEntries = [...entries];
 
-    this.runListeners(name as string, tmpListeners, ...args);
+    this.runEntries(name as string, tmpEntries, ...args);
   }
 
-  emitReversed<N extends keyof K>(name: N, ...args: Parameters<K[N]>): void {
-    const listeners = this.events.get(name as string);
+  public emitReversed<N extends keyof K>(
+    name: N,
+    ...args: Parameters<K[N]>
+  ): void {
+    const entries = this.events.get(name as string);
 
-    if (listeners === undefined) {
+    if (entries === undefined) {
       return;
     }
 
-    const tmpListeners = [...listeners].reverse();
+    const tmpEntries = [...entries].reverse();
 
-    this.runListeners(name as string, tmpListeners, ...args);
+    this.runEntries(name as string, tmpEntries, ...args);
   }
 
-  private removeListenerIfOnce(name: string, listener: Listener): void {
-    if (!listener.once) {
+  private removeEntryIfOnce(name: string, entry: ListenerEntry): void {
+    if (!entry.once) {
       return;
     }
 
-    let listeners = this.events.get(name);
+    let entries = this.events.get(name);
 
-    if (listeners === undefined) {
+    if (entries === undefined) {
       return;
     }
 
-    const tmpListeners = listeners.filter(
-      (tmpListener): boolean => tmpListener !== listener
+    const tmpEntries = entries.filter(
+      (tmpEntry): boolean => tmpEntry !== entry
     );
 
-    this.updateListeners(name, tmpListeners);
+    this.updateEntries(name, tmpEntries);
   }
 
-  private updateListeners(name: string, listeners: Listener[]): void {
-    if (listeners.length === 0) {
+  private updateEntries(name: string, entries: ListenerEntry[]): void {
+    if (entries.length === 0) {
       this.events.delete(name);
     } else {
-      this.events.set(name, listeners);
+      this.events.set(name, entries);
     }
   }
 
-  private runListeners(
+  private runEntries(
     name: string,
-    listeners: Listener[],
+    entries: ListenerEntry[],
     ...args: any[]
   ): void {
     if (this.ignoreErrors) {
-      for (const listener of listeners) {
-        this.removeListenerIfOnce(name, listener);
+      for (const entry of entries) {
+        this.removeEntryIfOnce(name, entry);
 
         try {
-          const bool = listener.closure(...args);
+          const bool = entry.listener(...args);
 
           if (bool === false) {
             return;
@@ -150,11 +153,11 @@ export class EverEmitter<K extends SignatureRecord> {
     }
 
     if (this.onError !== undefined) {
-      for (const listener of listeners) {
-        this.removeListenerIfOnce(name, listener);
+      for (const entry of entries) {
+        this.removeEntryIfOnce(name, entry);
 
         try {
-          const bool = listener.closure(...args);
+          const bool = entry.listener(...args);
 
           if (bool === false) {
             return;
@@ -171,10 +174,10 @@ export class EverEmitter<K extends SignatureRecord> {
       return;
     }
 
-    for (const listener of listeners) {
-      this.removeListenerIfOnce(name, listener);
+    for (const entry of entries) {
+      this.removeEntryIfOnce(name, entry);
 
-      const bool = listener.closure(...args);
+      const bool = entry.listener(...args);
 
       if (bool === false) {
         return;
