@@ -3,7 +3,7 @@ interface ListenerEntry {
   once: boolean;
 }
 
-export type SignatureRecord = Record<string, (...args: any[]) => any>;
+export type EverEmitterSignatures = Record<string, (...args: any[]) => any>;
 
 export type OnErrorCallback = (error: any, name: string, ...args: any[]) => any;
 
@@ -12,7 +12,7 @@ export interface EverEmitterOptions {
   onError?: OnErrorCallback;
 }
 
-export class EverEmitter<K extends SignatureRecord> {
+export class EverEmitter<K extends EverEmitterSignatures> {
   private ignoreErrors: boolean;
   private onError?: OnErrorCallback;
 

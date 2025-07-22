@@ -1,6 +1,6 @@
 {
   "name": "everemitter",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Event emitter, small yet powerful.",
   "repository": {
     "type": "git",
