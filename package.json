@@ -1,12 +1,12 @@
 {
   "name": "everemitter",
-  "version": "1.2.4",
+  "version": "1.3.0",
   "description": "Event emitter, small yet powerful.",
   "repository": {
     "type": "git",
     "url": "https://github.com/iconshot/everemitter.git"
   },
-  "main": "dist/index.js",
+  "main": "dist/cjs/index.js",
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
