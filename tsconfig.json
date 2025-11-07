@@ -11,5 +11,5 @@
     "types": [],
     "removeComments": true
   },
-  "include": ["src"]
+  "include": ["./src"]
 }
